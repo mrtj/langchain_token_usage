@@ -1,0 +1,16 @@
+{
+  "_checkout": "2022.6.3",
+  "_output_dir": "/Users/janos/Projects",
+  "_repo_dir": "/Users/janos/.cookiecutters/cookiecutter-hypermodern-python",
+  "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
+  "author": "Janos Tolgyesi",
+  "copyright_year": "2023",
+  "development_status": "Development Status :: 3 - Alpha",
+  "email": "janos.tolgyesi@gmail.com",
+  "friendly_name": "Langchain Token Usage",
+  "github_user": "mrtj",
+  "license": "MIT",
+  "package_name": "langchain_token_usage",
+  "project_name": "langchain-token-usage",
+  "version": "0.1.0"
+}
