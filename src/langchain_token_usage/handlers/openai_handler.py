@@ -2,11 +2,11 @@
 
 import datetime
 import os
-import time
-import uuid
+from collections import defaultdict
 from typing import Any
 from typing import Dict
 from typing import List
+from uuid import UUID
 
 import openai
 from langchain.callbacks.base import BaseCallbackHandler
@@ -18,6 +18,7 @@ from langchain.schema.output import LLMResult
 
 from ..reporters import TokenUsageReport
 from ..reporters import TokenUsageReporter
+from .timer import TokenUsageTimer
 
 
 def _get_caller_id(val: str | None) -> str | None:
@@ -28,8 +29,7 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
     """Collects metrics about the token usage of OpenAI LLM runs."""
 
     reporter: TokenUsageReporter
-    _first_token_timing: Dict[uuid.UUID, List[float]]
-    _completion_timing: Dict[uuid.UUID, float]
+    _timers: Dict[UUID, TokenUsageTimer]
     _caller_id: str | None = None
 
     def __init__(self, reporter: TokenUsageReporter) -> None:
@@ -40,9 +40,7 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
                 to the metrics repository.
         """
         self.reporter = reporter
-        self._first_token_timing = {}
-        self._completion_timing = {}
-
+        self._timers = defaultdict(TokenUsageTimer)
         self._caller_id = _get_caller_id(openai.api_key)
         if self._caller_id is None:
             self._caller_id = _get_caller_id(os.environ.get("OPENAI_API_KEY"))
@@ -52,41 +50,33 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
         serialized: Dict[str, Any],
         prompts: List[str],
         *,
-        run_id: uuid.UUID,
-        parent_run_id: uuid.UUID | None = None,
+        run_id: UUID,
+        parent_run_id: UUID | None = None,
         tags: List[str] | None = None,
         metadata: Dict[str, Any] | None = None,
         **kwargs: Any
     ) -> None:
         """Called when the LLM starts processing the request."""
-        start = time.perf_counter()
-        self._first_token_timing[run_id] = [start]
-        self._completion_timing[run_id] = start
+        self._timers[run_id].start()
 
     def on_llm_new_token(
         self,
         token: str,
         *,
         chunk: GenerationChunk | ChatGenerationChunk | None = None,
-        run_id: uuid.UUID,
-        parent_run_id: uuid.UUID | None = None,
+        run_id: UUID,
+        parent_run_id: UUID | None = None,
         **kwargs: Any
     ) -> Any:
         """Called when the LLM emits a new token."""
-        stop = time.perf_counter()
-        if run_id in self._first_token_timing and len(self._first_token_timing[run_id]) < 2:
-            self._first_token_timing[run_id].append(stop)
+        self._timers[run_id].new_token()
 
     def on_llm_end(
-        self,
-        response: LLMResult,
-        *,
-        run_id: uuid.UUID,
-        parent_run_id: uuid.UUID | None = None,
-        **kwargs: Any
+        self, response: LLMResult, *, run_id: UUID, parent_run_id: UUID | None = None, **kwargs: Any
     ) -> None:
         """Called when the LLM finishes processing the request."""
-        stop = time.perf_counter()
+        timer = self._timers.pop(run_id)
+        timer.end()
         timestamp = datetime.datetime.now()
 
         # get stats
@@ -115,18 +105,6 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
             pass
         total_tokens: int | None = token_usage.get("total_tokens")
 
-        # timing
-        first_token_time: float | None = None
-        completion_time: float | None = None
-        if run_id in self._first_token_timing:
-            ftt_data = self._first_token_timing[run_id]
-            if len(ftt_data) == 2:
-                first_token_time = ftt_data[1] - ftt_data[0]
-            del self._first_token_timing[run_id]
-        if run_id in self._completion_timing:
-            completion_time = stop - self._completion_timing[run_id]
-            del self._completion_timing[run_id]
-
         self.reporter.send_report(
             TokenUsageReport(
                 timestamp=timestamp,
@@ -134,8 +112,8 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
                 completion_tokens=completion_tokens,
                 total_tokens=total_tokens,
                 total_cost=total_cost,
-                first_token_time=first_token_time,
-                completion_time=completion_time,
+                first_token_time=timer.first_token_elapsed,
+                completion_time=timer.completion_elapsed,
                 model_name=model_name,
                 caller_id=self._caller_id,
             )

@@ -51,9 +51,6 @@ typeguard = ">=2.13.3"
 xdoctest = {extras = ["colors"], version = ">=0.15.10"}
 myst-parser = {version = ">=0.16.1"}
 
-[tool.poetry.scripts]
-langchain-token-usage = "langchain_token_usage.__main__:main"
-
 [tool.poetry.group.dev.dependencies]
 boto3-stubs = {extras = ["essential"], version = "^1.28.80"}
 
