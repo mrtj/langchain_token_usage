@@ -121,8 +121,8 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
         extra_dimensions = {}
         if report.model_name is not None and len(report.model_name) > 0:
             extra_dimensions["model_name"] = report.model_name
-        if report.api_key_id is not None:
-            extra_dimensions["api_key_id"] = report.api_key_id
+        if report.caller_id is not None:
+            extra_dimensions["caller_id"] = report.caller_id
 
         # send metrics
         metrics = self._get_metrics_data(
@@ -131,9 +131,7 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
             extra_dimensions=extra_dimensions,
         )
         try:
-            self.cloudwatch.put_metric_data(
-                Namespace=self.namespace, MetricData=metrics
-            )
+            self.cloudwatch.put_metric_data(Namespace=self.namespace, MetricData=metrics)
         except botocore.exceptions.ClientError as error:
             logger.warning("Couldn't put metrics data in namespace %s", self.namespace)
             logger.warning(str(error))

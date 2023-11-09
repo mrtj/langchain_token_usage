@@ -1,6 +1,7 @@
 """OpenAI token usage callback handler for LangChain."""
 
 import datetime
+import os
 import time
 import uuid
 from typing import Any
@@ -19,13 +20,17 @@ from ..reporters import TokenUsageReport
 from ..reporters import TokenUsageReporter
 
 
+def _get_caller_id(val: str | None) -> str | None:
+    return val[-4:] if val is not None and len(val) >= 4 else None
+
+
 class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
     """Collects metrics about the token usage of OpenAI LLM runs."""
 
     reporter: TokenUsageReporter
     _first_token_timing: Dict[uuid.UUID, List[float]]
     _completion_timing: Dict[uuid.UUID, float]
-    _api_key_id: str | None
+    _caller_id: str | None = None
 
     def __init__(self, reporter: TokenUsageReporter) -> None:
         """Collects metrics about the token usage of OpenAI LLM runs.
@@ -37,7 +42,10 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
         self.reporter = reporter
         self._first_token_timing = {}
         self._completion_timing = {}
-        self._api_key_id = openai.api_key[-4:] if openai.api_key else None
+
+        self._caller_id = _get_caller_id(openai.api_key)
+        if self._caller_id is None:
+            self._caller_id = _get_caller_id(os.environ.get("OPENAI_API_KEY"))
 
     def on_llm_start(
         self,
@@ -66,10 +74,7 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
     ) -> Any:
         """Called when the LLM emits a new token."""
         stop = time.perf_counter()
-        if (
-            run_id in self._first_token_timing
-            and len(self._first_token_timing[run_id]) < 2
-        ):
+        if run_id in self._first_token_timing and len(self._first_token_timing[run_id]) < 2:
             self._first_token_timing[run_id].append(stop)
 
     def on_llm_end(
@@ -96,9 +101,7 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
         total_cost: float | None = None
         try:
             completion_cost = (
-                get_openai_token_cost_for_model(
-                    model_name, completion_tokens, is_completion=True
-                )
+                get_openai_token_cost_for_model(model_name, completion_tokens, is_completion=True)
                 if completion_tokens is not None
                 else 0.0
             )
@@ -134,6 +137,6 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
                 first_token_time=first_token_time,
                 completion_time=completion_time,
                 model_name=model_name,
-                api_key_id=self._api_key_id,
+                caller_id=self._caller_id,
             )
         )
