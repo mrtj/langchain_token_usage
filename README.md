@@ -1,45 +1,53 @@
 # Langchain Token Usage
 
-[![PyPI](https://img.shields.io/pypi/v/langchain-token-usage.svg)][pypi_]
-[![Status](https://img.shields.io/pypi/status/langchain-token-usage.svg)][status]
-[![Python Version](https://img.shields.io/pypi/pyversions/langchain-token-usage)][python version]
-[![License](https://img.shields.io/pypi/l/langchain-token-usage)][license]
-
-[![Read the documentation at https://langchain-token-usage.readthedocs.io/](https://img.shields.io/readthedocs/langchain-token-usage/latest.svg?label=Read%20the%20Docs)][read the docs]
-[![Tests](https://github.com/mrtj/langchain-token-usage/workflows/Tests/badge.svg)][tests]
-[![Codecov](https://codecov.io/gh/mrtj/langchain-token-usage/branch/main/graph/badge.svg)][codecov]
-
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
-[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
-
-[pypi_]: https://pypi.org/project/langchain-token-usage/
-[status]: https://pypi.org/project/langchain-token-usage/
-[python version]: https://pypi.org/project/langchain-token-usage
-[read the docs]: https://langchain-token-usage.readthedocs.io/
-[tests]: https://github.com/mrtj/langchain-token-usage/actions?workflow=Tests
-[codecov]: https://app.codecov.io/gh/mrtj/langchain-token-usage
-[pre-commit]: https://github.com/pre-commit/pre-commit
-[black]: https://github.com/psf/black
-
-## Features
-
-- TODO
-
-## Requirements
-
-- TODO
+This repository contains a python module to track the consumption of tokens of a Large Language Models (LLMs) within a [LangChain](https://github.com/langchain-ai/langchain) application.
 
 ## Installation
 
-You can install _Langchain Token Usage_ via [pip] from [PyPI]:
+You can install _LangChain Token Usage_ via [pip]:
 
 ```console
-$ pip install langchain-token-usage
+$ pip install git+https://github.com/mrtj/langchain_token_usage.git
+```
+
+or in requirements.txt:
+
+```txt
+langchain-token-usage @ git+https://github.com/mrtj/langchain_token_usage.git
 ```
 
 ## Usage
 
-Please see the [Command-line Reference] for details.
+Token usage tracking is implemented as a [LangChain Callback](https://python.langchain.com/docs/modules/callbacks/) so it is easy to integrate in any LangChain application. The collection of the token usage metrics is LLM specific: currently only OpenAI LLMs are supported.
+
+The metrics collected can be processed locally, or sent to a metrics repository via a Reporter. Current implementation includes sending the metrics to [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) service.
+
+If you wish to use CloudWatch, you should ensure that you have [configured your boto3 client](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html) to credentials that are associated to an IAM Role that can write data to CloudWatch Metrics.
+
+Example usage:
+
+```python
+from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+
+from langchain_token_usage.handlers import OpenAITokenUsageCallbackHandler
+from langchain_token_usage.reporters import CloudWatchTokenUsageReporter
+
+reporter = CloudWatchTokenUsageReporter(
+    namespace="openai_token_usage",
+    dimensions={"project": "my_test_project"}
+)
+handler = OpenAITokenUsageCallbackHandler(reporter)
+
+llm = ChatOpenAI(model="gpt-4", callbacks=[handler])
+prompt = PromptTemplate.from_template("1 + {number} = ")
+
+chain = LLMChain(llm=llm, prompt=prompt)
+chain.run(number=2)
+```
+
+The above code will perform a single call to an OpenAI GPT-4 backed LLM model, and send token usage metrics and cost estimation to CloudWatch. You can define the desired namespace of your CloudWatch metrics, and add arbitrary metrics dimensions as `str -> str` mapping.
 
 ## Contributing
 
@@ -70,4 +78,3 @@ This project was generated from [@cjolowicz]'s [Hypermodern Python Cookiecutter]
 
 [license]: https://github.com/mrtj/langchain-token-usage/blob/main/LICENSE
 [contributor guide]: https://github.com/mrtj/langchain-token-usage/blob/main/CONTRIBUTING.md
-[command-line reference]: https://langchain-token-usage.readthedocs.io/en/latest/usage.html
