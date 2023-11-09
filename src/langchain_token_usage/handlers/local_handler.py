@@ -1,3 +1,8 @@
+"""This token usage callback handler can be used for LLMs that does not provide usage info.
+
+It counts the consumed tokens locally.
+"""
+
 import datetime
 from collections import defaultdict
 from typing import Any

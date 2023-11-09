@@ -1,7 +1,5 @@
 """This module contains a reporter that counts the total token usage in the local memory."""
 
-from typing import Any
-
 from . import TokenUsageReport
 from . import TokenUsageReporter
 
@@ -43,6 +41,7 @@ class LocalStatsReporter(TokenUsageReporter):
         self.total_cost += report.total_cost or 0.0
 
     def __repr__(self) -> str:
+        """Returns the textual representation of this object."""
         return (
             "Local stats report:\n"
             f"  total_tokens={self.total_tokens}\n"
