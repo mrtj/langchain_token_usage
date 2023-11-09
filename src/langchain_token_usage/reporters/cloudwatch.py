@@ -54,7 +54,7 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
     """
 
     namespace: str
-    cw_dimensions: List[Dict[str, str]]
+    dimensions: Dict[str, str]
 
     def __init__(
         self,
@@ -72,9 +72,7 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
             boto3_session (boto3.Session | None, optional): Optional pre-configured boto3 session.
                 If left to the default None, the default boto3 session will be used.
         """
-        if dimensions is None:
-            dimensions = {}
-        self.cw_dimensions = CloudWatchTokenUsageReporter._cw_dimensions(dimensions)
+        self.dimensions = dimensions or {}
         self.namespace = namespace
         boto3_session = boto3_session or boto3.Session()
         self.cloudwatch = boto3_session.client("cloudwatch")
@@ -89,13 +87,14 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
         timestamp: datetime.datetime,
         extra_dimensions: Dict[str, str] | None = None,
     ) -> List[Dict[str, Any]]:
-        dims = self.cw_dimensions
+        dimensions = self.dimensions
         if extra_dimensions is not None:
-            dims += CloudWatchTokenUsageReporter._cw_dimensions(extra_dimensions)
+            dimensions = {**dimensions, **extra_dimensions}
+        cw_dimensions = CloudWatchTokenUsageReporter._cw_dimensions(dimensions)
         return [
             {
                 "MetricName": metric_name,
-                "Dimensions": dims,
+                "Dimensions": cw_dimensions,
                 "Timestamp": timestamp.astimezone(datetime.timezone.utc),
                 "Value": metric_data.float_value,
                 "Unit": metric_data.unit,
