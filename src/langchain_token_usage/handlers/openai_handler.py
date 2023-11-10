@@ -7,10 +7,7 @@ from typing import Any, Dict, List
 from uuid import UUID
 
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain.callbacks.openai_info import (
-    get_openai_token_cost_for_model,
-    standardize_model_name,
-)
+from langchain.callbacks.openai_info import get_openai_token_cost_for_model, standardize_model_name
 from langchain.schema.output import ChatGenerationChunk, GenerationChunk, LLMResult
 
 from ..reporters import TokenUsageReport, TokenUsageReporter
