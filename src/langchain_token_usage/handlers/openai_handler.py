@@ -8,7 +8,6 @@ from typing import Dict
 from typing import List
 from uuid import UUID
 
-import openai
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.callbacks.openai_info import get_openai_token_cost_for_model
 from langchain.callbacks.openai_info import standardize_model_name
@@ -39,6 +38,12 @@ class OpenAITokenUsageCallbackHandler(BaseCallbackHandler):
             reporter (TokenUsageReporter): The reporter that will be used to send the metrics
                 to the metrics repository.
         """
+        try:
+            import openai
+        except ImportError as err:
+            raise ImportError(
+                "openai package not found, please install with `pip install openai`"
+            ) from err
         self.reporter = reporter
         self._timers = defaultdict(TokenUsageTimer)
         self._caller_id = _get_caller_id(openai.api_key)

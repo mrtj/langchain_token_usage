@@ -7,9 +7,6 @@ from typing import Dict
 from typing import List
 from typing import NamedTuple
 
-import boto3
-import botocore
-
 from . import TokenUsageReport
 from . import TokenUsageReporter
 
@@ -60,7 +57,7 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
         self,
         namespace: str,
         dimensions: Dict[str, str] | None = None,
-        boto3_session: boto3.Session | None = None,
+        boto3_session: Any | None = None,
     ) -> None:
         """A token usage reporter implementation that sends the metrics data to Amazon CloudWatch.
 
@@ -72,10 +69,19 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
             boto3_session (boto3.Session | None, optional): Optional pre-configured boto3 session.
                 If left to the default None, the default boto3 session will be used.
         """
+        try:
+            import boto3
+            import botocore
+        except ImportError as err:
+            raise ImportError(
+                "boto3 package not found, please install with `pip install boto3`"
+            ) from err
+
         self.dimensions = dimensions or {}
         self.namespace = namespace
         boto3_session = boto3_session or boto3.Session()
         self.cloudwatch = boto3_session.client("cloudwatch")
+        self._botocore = botocore
 
     @staticmethod
     def _cw_dimensions(dimensions: Dict[str, str]) -> List[Dict[str, str]]:
@@ -131,7 +137,7 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
         )
         try:
             self.cloudwatch.put_metric_data(Namespace=self.namespace, MetricData=metrics)
-        except botocore.exceptions.ClientError as error:
+        except self._botocore.exceptions.ClientError as error:
             logger.warning("Couldn't put metrics data in namespace %s", self.namespace)
             logger.warning(str(error))
         except AttributeError:
