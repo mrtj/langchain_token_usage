@@ -2,13 +2,9 @@
 
 import datetime
 import logging
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import NamedTuple
+from typing import Any, Dict, List, NamedTuple
 
-from . import TokenUsageReport
-from . import TokenUsageReporter
+from . import TokenUsageReport, TokenUsageReporter
 
 
 logger = logging.getLogger(__name__)

@@ -5,19 +5,13 @@ It counts the consumed tokens locally.
 
 import datetime
 from collections import defaultdict
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
+from typing import Any, Callable, Dict, List
 from uuid import UUID
 
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain.schema.output import ChatGenerationChunk
-from langchain.schema.output import GenerationChunk
-from langchain.schema.output import LLMResult
+from langchain.schema.output import ChatGenerationChunk, GenerationChunk, LLMResult
 
-from ..reporters import TokenUsageReport
-from ..reporters import TokenUsageReporter
+from ..reporters import TokenUsageReport, TokenUsageReporter
 from .timer import TokenUsageTimer
 
 

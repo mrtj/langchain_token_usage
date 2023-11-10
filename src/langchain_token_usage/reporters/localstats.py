@@ -1,7 +1,6 @@
 """This module contains a reporter that counts the total token usage in the local memory."""
 
-from . import TokenUsageReport
-from . import TokenUsageReporter
+from . import TokenUsageReport, TokenUsageReporter
 
 
 class LocalStatsReporter(TokenUsageReporter):

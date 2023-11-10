@@ -1,7 +1,6 @@
 """This package contains reporters that send toke usage reports to a metrics repository."""
 
-from .base import TokenUsageReport
-from .base import TokenUsageReporter
+from .base import TokenUsageReport, TokenUsageReporter
 from .cloudwatch import CloudWatchTokenUsageReporter
 from .localstats import LocalStatsReporter
 
