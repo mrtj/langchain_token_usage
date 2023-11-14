@@ -2,7 +2,7 @@
 
 import datetime
 import logging
-from typing import Any, Dict, List, NamedTuple
+from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 from . import TokenUsageReport, TokenUsageReporter
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class CloudWatchMetrics(NamedTuple):
     """A metrics value with units supported by Amazon CloudWatch."""
 
-    value: int | float | None
+    value: Optional[Union[int, float]]
     unit: str
 
     @property
@@ -37,7 +37,9 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
 
         from langchain.chains import LLMChain
 
-        reporter = CloudWatchTokenUsageReporter("openai_token_usage", {"project": "test_project"})
+        reporter = CloudWatchTokenUsageReporter(
+            "openai_token_usage", {"project": "test_project"}
+        )
         handler = OpenAITokenUsageCallbackHandler(reporter)
 
         llm = AnyLLM(..., callbacks=[handler])
@@ -52,18 +54,19 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
     def __init__(
         self,
         namespace: str,
-        dimensions: Dict[str, str] | None = None,
-        boto3_session: Any | None = None,
+        dimensions: Optional[Dict[str, str]] = None,
+        boto3_session: Optional[Any] = None,
     ) -> None:
         """A token usage reporter implementation that sends the metrics data to Amazon CloudWatch.
 
         Args:
             namespace (str): The Amazon CloudWatch namespace of the metrics.
-            dimensions (Dict[str, str] | None, optional): Additional CloudWatch dimensions of the
-                metrics. Defaults to None. The model name, if present in the callback, will be
-                added to these dimensions.
-            boto3_session (boto3.Session | None, optional): Optional pre-configured boto3 session.
-                If left to the default None, the default boto3 session will be used.
+            dimensions (Dict[str, str], optional): Additional CloudWatch
+                dimensions of the metrics. Defaults to None. The model name, if
+                present in the callback, will be added to these dimensions.
+            boto3_session (boto3.Session, optional): Optional pre-configured
+                boto3 session. If left to the default None, the default boto3
+                session will be used.
         """
         try:
             import boto3
@@ -87,7 +90,7 @@ class CloudWatchTokenUsageReporter(TokenUsageReporter):
         self,
         raw_metrics: Dict[str, CloudWatchMetrics],
         timestamp: datetime.datetime,
-        extra_dimensions: Dict[str, str] | None = None,
+        extra_dimensions: Optional[Dict[str, str]] = None,
     ) -> List[Dict[str, Any]]:
         dimensions = self.dimensions
         if extra_dimensions is not None:

@@ -47,5 +47,5 @@ class LocalStatsReporter(TokenUsageReporter):
             f"  prompt_tokens={self.prompt_tokens}\n"
             f"  completion_tokens={self.completion_tokens}\n"
             f"  successful_requests={self.successful_requests}\n"
-            f"  total_cost={self.total_cost}"
+            f"  total_cost={self.total_cost:.8f}"
         )
