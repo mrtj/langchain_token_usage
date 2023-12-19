@@ -18,6 +18,7 @@ Changelog = "https://github.com/mrtj/langchain-token-usage/releases"
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4.0"
 langchain = ">=0.0.351,<0.1.0"
+urllib3 = ">=1.25.4,<1.27"
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
