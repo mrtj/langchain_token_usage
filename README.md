@@ -6,8 +6,8 @@ This repository contains a python module to track the consumption of tokens of a
 
 You can install _LangChain Token Usage_ via [pip]:
 
-```console
-$ pip install git+https://github.com/mrtj/langchain_token_usage.git
+```shell
+pip install git+https://github.com/mrtj/langchain_token_usage.git
 ```
 
 or in requirements.txt:
